@@ -1,0 +1,42 @@
+{
+  "name": "velvet-gulp",
+  "version": "1.0.0",
+  "description": "Gulp helpers for Velvet.",
+  "main": "index.js",
+  "scripts": {
+    "test": "eslint **/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ronik-design/velvet-gulp.git"
+  },
+  "keywords": [
+    "gulp",
+    "velvet",
+    "static-site",
+    "generator",
+    "ssg"
+  ],
+  "author": "Michael Shick <m@shick.us>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ronik-design/velvet-gulp/issues"
+  },
+  "homepage": "https://github.com/ronik-design/velvet-gulp#readme",
+  "devDependencies": {
+    "babel-eslint": "^6.0.4",
+    "eslint": "^2.9.0",
+    "eslint-config-ronik": "^1.0.3"
+  },
+  "eslintConfig": {
+    "extends": "ronik"
+  },
+  "dependencies": {
+    "gulp-util": "^3.0.7",
+    "nunjucks": "^2.4.2",
+    "sort-keys": "^1.1.1",
+    "through2": "^2.0.1",
+    "vinyl": "^1.1.1",
+    "vinyl-file": "^2.0.0"
+  }
+}

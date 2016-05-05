@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "Gulp helpers for Velvet.",
   "main": "index.js",
+  "engines": {
+    "node": ">= 5.0.0"
+  },
   "scripts": {
-    "test": "eslint **/*.js"
+    "lint": "eslint **/*.js",
+    "test": "npm run lint"
   },
   "repository": {
     "type": "git",

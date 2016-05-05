@@ -5,9 +5,11 @@ const init = require('./lib/init');
 const destination = require('./lib/destination');
 const revisionManifest = require('./lib/revision-manifest');
 
-module.exports = {
-  init,
-  destination,
-  revisionManifest,
-  render
+module.exports = function (velvet) {
+  return {
+    init: init(velvet),
+    destination,
+    revisionManifest,
+    render: render(velvet)
+  };
 };

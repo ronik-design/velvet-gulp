@@ -1,15 +1,23 @@
-'use strict';
+const velvet = require('velvet');
+const tasks = require('./tasks');
+const plugins = require('./plugins');
 
-const render = require('./lib/render');
-const init = require('./lib/init');
-const destination = require('./lib/destination');
-const revisionManifest = require('./lib/revision-manifest');
+const init = function (gulp, options) {
+  options.velvet = options.velvet || velvet.loadEnv(options);
 
-module.exports = function (velvet) {
-  return {
-    init: init(velvet),
-    destination,
-    revisionManifest,
-    render: render(velvet)
-  };
+  for (const task in tasks) {
+    tasks[task](gulp, options);
+  }
+
+  if (options.deployer === 'aws') {
+    gulp.task('deployer', ['deployer-aws']);
+  }
+
+  if (options.deployer === 'ftp') {
+    gulp.task('deployer', ['deployer-ftp']);
+  }
 };
+
+module.exports = init;
+module.exports.tasks = tasks;
+module.exports.plugins = plugins;

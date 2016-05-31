@@ -8,6 +8,8 @@ const gulpUtil = require('gulp-util');
 const PluginError = gulpUtil.PluginError;
 const getHash = require('./utils/get-hash');
 const relPath = require('./utils/rel-path');
+const NodeCache = require('node-cache');
+const templateCache = new NodeCache();
 
 const PLUGIN_NAME = 'velvet-render';
 const HASH_LENGTH = 12;
@@ -37,7 +39,6 @@ const render = function (filepath, context, options) {
   const page = context.page;
   const env = options.env;
   const cacheEnabled = options.cacheEnabled;
-  const cache = options.templateCache;
 
   const content = page.content;
 
@@ -47,11 +48,13 @@ const render = function (filepath, context, options) {
 
   if (cacheEnabled) {
     contentHash = getHash(content, HASH_LENGTH);
-    template = cache.get(filepath, contentHash);
+
+    const cacheKey = `${filepath}:${contentHash}`;
+    template = templateCache.get(cacheKey);
 
     if (!template) {
       template = nunjucks.compile(content, env);
-      cache.set(filepath, template, contentHash);
+      templateCache.set(cacheKey, template);
     }
   } else {
     template = nunjucks.compile(content, env);
@@ -87,60 +90,56 @@ const renderVariant = (file, variant, options) => {
     });
 };
 
-const gulpRender = function (velvet) {
-  return function (options) {
-    options = options || {};
+const gulpRender = function (options) {
+  options = options || {};
 
-    const env = velvet.env;
-    const templateCache = velvet.templateCache;
-    const cacheEnabled = !options.noCache;
+  const velvet = options.velvet;
+  const cacheEnabled = !options.noCache;
 
-    const transform = function (file, enc, cb) {
-      if (file.isNull()) {
-        return cb(null, file);
-      }
+  const transform = function (file, enc, cb) {
+    if (file.isNull()) {
+      return cb(null, file);
+    }
 
-      if (file.isStream()) {
-        return cb(new PluginError(PLUGIN_NAME, 'Streaming not supported'));
-      }
+    if (file.isStream()) {
+      return cb(new PluginError(PLUGIN_NAME, 'Streaming not supported'));
+    }
 
-      if (!file.velvetObj) {
-        return cb(null, file);
-      }
+    if (!file.velvetObj) {
+      return cb(null, file);
+    }
 
-      const doc = file.velvetObj;
+    const doc = file.velvetObj;
 
-      if (!doc.output) {
-        file = null;
-        return cb(null, null);
-      }
+    if (!doc.output) {
+      file = null;
+      return cb(null, null);
+    }
 
-      if (!doc.renderWithNunjucks) {
-        return cb(null, file);
-      }
+    if (!doc.renderWithNunjucks) {
+      return cb(null, file);
+    }
 
-      let tasks = [];
+    let tasks = [];
 
-      const opts = {
-        env,
-        cacheEnabled,
-        templateCache,
-        transform: this
-      };
-
-      if (doc.variants) {
-        tasks = doc.variants.map(variant => renderVariant(file, variant, opts));
-      }
-
-      tasks.push(renderVariant(file, doc, opts));
-
-      Promise.all(tasks)
-        .then(() => cb())
-        .catch(err => errorHandler(err, file, cb));
+    const opts = {
+      env: velvet,
+      cacheEnabled,
+      transform: this
     };
 
-    return through.obj(transform);
+    if (doc.variants) {
+      tasks = doc.variants.map(variant => renderVariant(file, variant, opts));
+    }
+
+    tasks.push(renderVariant(file, doc, opts));
+
+    Promise.all(tasks)
+      .then(() => cb())
+      .catch(err => errorHandler(err, file, cb));
   };
+
+  return through.obj(transform);
 };
 
 module.exports = gulpRender;

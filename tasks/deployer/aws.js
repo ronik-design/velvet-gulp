@@ -36,7 +36,11 @@ const getManifest = function (dirname, filename) {
   return manifest;
 };
 
-const getHostname = function (target, config) {
+const getBucket = function (target, config) {
+  if (config.deployer.bucket) {
+    return config.deployer.bucket;
+  }
+
   let deployUrl = config.url;
 
   if (target === 'staging' && config.staging_url) {
@@ -51,15 +55,15 @@ module.exports = function (gulp, options) {
   const site = options.velvet.getGlobal('site');
   const config = options.velvet.getGlobal('config');
 
+  let deployHost;
+
   gulp.task('aws:config', cb => {
     const target = gutil.env.target || 'staging';
 
-    gutil.env.deployResult = {service: 'AWS/S3'};
-
-    const hostname = getHostname(target, config);
+    const bucket = getBucket(target, config);
 
     const s3Config = {
-      domain: hostname,
+      domain: bucket,
       index: 'index.html',
       error: site.config.error
     };
@@ -70,18 +74,17 @@ module.exports = function (gulp, options) {
           HttpErrorCodeReturnedEquals: '404'
         },
         Redirect: {
-          HostName: hostname
+          ReplaceKeyWith: 'index.html'
         }
       }];
     }
 
     s3Website(s3Config, (err, website) => {
       if (err) {
-        notify.onError(err);
         return cb(err);
       }
 
-      gutil.env.deployResult.host = website;
+      deployHost = website;
 
       if (website && website.modified) {
         gutil.log(logName, 'Site config updated');
@@ -95,9 +98,9 @@ module.exports = function (gulp, options) {
     const force = gutil.env.force;
     const target = gutil.env.target || 'staging';
 
-    const hostname = getHostname(target, config);
+    const bucket = getBucket(target, config);
 
-    if (!hostname) {
+    if (!bucket) {
       return cb();
     }
 
@@ -105,7 +108,7 @@ module.exports = function (gulp, options) {
 
     const publisher = awspublish.create({
       params: {
-        Bucket: hostname
+        Bucket: bucket
       }
     });
 
@@ -139,13 +142,24 @@ module.exports = function (gulp, options) {
       .pipe(parallelize(publisher.publish(STATIC_HEADERS, publisherOpts), MAX_CONCURRENCY));
 
     return merge(gzipRevisioned, gzipStatic, plainRevisioned, plainStatic)
-      .on('error', notify.onError())
       .pipe(publisher.sync())
-      .on('error', notify.onError())
       .pipe(publisher.cache())
-      .on('error', notify.onError())
       .pipe(awspublish.reporter());
   });
 
-  gulp.task('deployer-aws', cb => runSequence('aws:config', 'aws:publish', cb));
+  gulp.task('deployer-aws', cb => {
+    runSequence('aws:config', 'aws:publish', err => {
+      if (err) {
+        gutil.log(gutil.colors.red(`Your deploy failed!`));
+        gutil.log(err.message);
+      } else {
+        gutil.log(`Your site has been deployed to AWS`);
+        gutil.log('----------------------------------');
+        gutil.log(gutil.colors.green(deployHost));
+      }
+
+      notify.onError()(err);
+      cb(err);
+    });
+  });
 };

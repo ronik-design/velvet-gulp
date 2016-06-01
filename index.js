@@ -17,14 +17,16 @@ const init = function (gulp, options) {
   require('./tasks/styles')(gulp, options);
   require('./tasks/watch')(gulp, options);
 
-  if (options.deployer === 'aws') {
-    require('./tasks/deployer/aws')(gulp, options);
-    gulp.task('deployer', ['deployer-aws']);
-  }
+  if (options.config.deployer) {
+    if (options.config.deployer.type === 'aws') {
+      require('./tasks/deployer/aws')(gulp, options);
+      gulp.task('deployer', ['deployer-aws']);
+    }
 
-  if (options.deployer === 'ftp') {
-    require('./tasks/deployer/ftp')(gulp, options);
-    gulp.task('deployer', ['deployer-ftp']);
+    if (options.config.deployer.type === 'ftp') {
+      require('./tasks/deployer/ftp')(gulp, options);
+      gulp.task('deployer', ['deployer-ftp']);
+    }
   }
 };
 

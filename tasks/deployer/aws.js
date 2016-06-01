@@ -160,9 +160,11 @@ module.exports = function (gulp, options) {
         gutil.log(gutil.colors.red(`Your deploy failed!`));
         notify.onError()(err);
       } else {
+        gutil.log('');
         gutil.log(`Your site has been deployed to AWS`);
         gutil.log('----------------------------------');
         gutil.log(gutil.colors.green(deployHost));
+        gutil.log('');
       }
 
       cb(err);

@@ -17,8 +17,6 @@ const plugins = require('../plugins');
 
 const TASK_NAME = 'scripts';
 
-const WEBPACK_CONFIG_FILENAME = 'webpack.config.js';
-
 const MINIFY_DEFAULTS = {
   'screw_ie8': true,
   'properties': true,
@@ -55,8 +53,14 @@ const PRODUCTION_PLUGIN_DEFAULTS = [
 ];
 
 const getConfigFile = function (dir, type) {
+  let filename = 'webpack.config.js';
+
+  if (type) {
+    filename = `webpack.${type}.config.js`;
+  }
+
   try {
-    const filepath = path.join(dir, `webpack.${type}.config.js`);
+    const filepath = path.join(dir, filename);
     fs.accessSync(filepath, fs.F_OK);
     return filepath;
   } catch (e) {
@@ -67,9 +71,11 @@ const getConfigFile = function (dir, type) {
 const getConfig = function (scriptsDir, options) {
   let config;
 
+  const configPathDefault = getConfigFile(scriptsDir);
+
   if (options.production) {
     const configPath = getConfigFile(scriptsDir, 'production');
-    config = require(configPath || WEBPACK_CONFIG_FILENAME);
+    config = require(configPath || configPathDefault);
     config.plugins = config.plugins || [];
 
     if (!configPath) {
@@ -78,7 +84,7 @@ const getConfig = function (scriptsDir, options) {
     }
   } else {
     const configPath = getConfigFile(scriptsDir, 'development');
-    config = require(configPath || WEBPACK_CONFIG_FILENAME);
+    config = require(configPath || configPathDefault);
     config.plugins = config.plugins || [];
 
     if (!configPath) {

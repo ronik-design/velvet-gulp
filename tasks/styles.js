@@ -10,7 +10,8 @@ const notify = require('gulp-notify');
 const size = require('gulp-size');
 const gulpIf = require('gulp-if');
 const merge = require('merge-stream');
-const clone = require('lodash.clone');
+const clonedeep = require('lodash.clonedeep');
+const get = require('lodash.get');
 const plugins = require('../plugins');
 
 const sass = require('gulp-sass');
@@ -69,11 +70,10 @@ const getImageUrl = function (site) {
 
 const sassImportMappings = function (maps) {
   const mapper = function (importPath, prevPath) {
-    let file = prevPath;
+    let file = importPath;
 
     for (const map of maps) {
-      const re = new RegExp(map.search);
-      file = importPath.replace(re, map.replace);
+      file = file.replace(new RegExp(map.search), map.replace);
     }
 
     if (file === prevPath) {
@@ -179,7 +179,7 @@ module.exports = function (gulp, options) {
   const runSequence = require('run-sequence').use(gulp);
   const velvet = options.velvet;
   const site = velvet.getGlobal('site');
-  const config = velvet.getGlobal('config');
+  const config = clonedeep(velvet.getGlobal('config'));
 
   gulp.task('styles:lint', () => {
     const watching = gutil.env.watching;
@@ -216,22 +216,20 @@ module.exports = function (gulp, options) {
 
     let postcssProcessors = [
       objectFitImages,
-      autoprefixer({browsers: [config.styles.autoprefixer]})
+      autoprefixer({browsers: [get(config, 'styles.autoprefixer')]})
     ];
 
-    if (config.styles) {
-      if (config.styles.sass) {
-        if (config.styles.sass.importMappings) {
-          sassConfig.importer = sassImportMappings(config.styles.sass.importMappings);
-          delete config.styles.sass.importMappings;
-        }
-        Object.assign(sassConfig, config.styles.sass);
+    if (get(config, 'styles.sass')) {
+      if (config.styles.sass.importMappings) {
+        sassConfig.importer = sassImportMappings(config.styles.sass.importMappings);
+        delete config.styles.sass.importMappings;
       }
+      Object.assign(sassConfig, config.styles.sass);
+    }
 
-      if (config.styles.postcss) {
-        const plugins = loadPostcssPlugins(config.styles.postcss);
-        postcssProcessors = postcssProcessors.concat(plugins);
-      }
+    if (get(config, 'styles.postcss')) {
+      const plugins = loadPostcssPlugins(config.styles.postcss);
+      postcssProcessors = postcssProcessors.concat(plugins);
     }
 
     const styles = site.styles.filter(style => style.output);
@@ -239,7 +237,7 @@ module.exports = function (gulp, options) {
     const tasks = [];
 
     for (const style of styles) {
-      const processors = clone(postcssProcessors);
+      const processors = clonedeep(postcssProcessors);
 
       if (style.minify) {
         processors.push(cssnano);

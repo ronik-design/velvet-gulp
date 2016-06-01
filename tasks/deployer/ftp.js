@@ -39,14 +39,13 @@ module.exports = function (gulp, options) {
     runSequence('ftp:publish', err => {
       if (err) {
         gutil.log(gutil.colors.red(`Your deploy failed!`));
-        gutil.log(err.message);
+        notify.onError()(err);
       } else {
         gutil.log(`Your site has been deployed to FTP`);
         gutil.log('----------------------------------');
         gutil.log(gutil.colors.green(deployHost));
       }
 
-      notify.onError()(err);
       cb(err);
     });
   });

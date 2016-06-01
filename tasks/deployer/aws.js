@@ -8,7 +8,7 @@ const ignore = require('gulp-ignore');
 const awspublish = require('gulp-awspublish');
 const s3Website = require('s3-website');
 const notify = require('gulp-notify');
-const merge = require('merge-stream');
+const mergeStream = require('merge-stream');
 const parallelize = require('concurrent-transform');
 const cyan = gutil.colors.cyan;
 const logName = `'${cyan('aws')}'`;
@@ -84,7 +84,7 @@ module.exports = function (gulp, options) {
         return cb(err);
       }
 
-      deployHost = website;
+      deployHost = website.url;
 
       if (website && website.modified) {
         gutil.log(logName, 'Site config updated');
@@ -116,32 +116,39 @@ module.exports = function (gulp, options) {
 
     const revManifest = getManifest(deployDir);
 
-    let gzipRevisioned = gutil.noop();
-    let plainRevisioned = gutil.noop();
+    const merged = mergeStream();
 
     if (revManifest.length) {
       const revPaths = revManifest.map(p => path.join(deployDir, p));
 
-      gzipRevisioned = gulp.src(revPaths, {base: deployDir})
-        .pipe(ignore.include('**/*.{html,js,css,txt}'))
-        .pipe(awspublish.gzip())
-        .pipe(parallelize(publisher.publish(REVISIONED_HEADERS, publisherOpts), MAX_CONCURRENCY));
+      merged.add(
+        gulp.src(revPaths, {base: deployDir})
+          .pipe(ignore.include('**/*.{html,js,css,txt}'))
+          .pipe(awspublish.gzip())
+          .pipe(parallelize(publisher.publish(REVISIONED_HEADERS, publisherOpts), MAX_CONCURRENCY))
+      );
 
-      plainRevisioned = gulp.src(revPaths, {base: deployDir})
-        .pipe(ignore.exclude('**/*.{html,js,css,txt}'))
-        .pipe(parallelize(publisher.publish(REVISIONED_HEADERS, publisherOpts), MAX_CONCURRENCY));
+      merged.add(
+        gulp.src(revPaths, {base: deployDir})
+          .pipe(ignore.exclude('**/*.{html,js,css,txt}'))
+          .pipe(parallelize(publisher.publish(REVISIONED_HEADERS, publisherOpts), MAX_CONCURRENCY))
+      );
     }
 
-    const gzipStatic = gulp.src(path.join(deployDir, '**/*.+(html|js|css|txt)'))
-      .pipe(gulpIf(revManifest.length, ignore.exclude(revManifest)))
-      .pipe(awspublish.gzip())
-      .pipe(parallelize(publisher.publish(STATIC_HEADERS, publisherOpts), MAX_CONCURRENCY));
+    merged.add(
+      gulp.src(path.join(deployDir, '**/*.+(html|js|css|txt)'))
+        .pipe(gulpIf(revManifest.length, ignore.exclude(revManifest)))
+        .pipe(awspublish.gzip())
+        .pipe(parallelize(publisher.publish(STATIC_HEADERS, publisherOpts), MAX_CONCURRENCY))
+    );
 
-    const plainStatic = gulp.src(path.join(deployDir, '/**/*.!(html|js|css|txt)'))
-      .pipe(gulpIf(revManifest.length, ignore.exclude(revManifest)))
-      .pipe(parallelize(publisher.publish(STATIC_HEADERS, publisherOpts), MAX_CONCURRENCY));
+    merged.add(
+      gulp.src(path.join(deployDir, '/**/*.!(html|js|css|txt)'))
+        .pipe(gulpIf(revManifest.length, ignore.exclude(revManifest)))
+        .pipe(parallelize(publisher.publish(STATIC_HEADERS, publisherOpts), MAX_CONCURRENCY))
+    );
 
-    return merge(gzipRevisioned, gzipStatic, plainRevisioned, plainStatic)
+    return merged
       .pipe(publisher.sync())
       .pipe(publisher.cache())
       .pipe(awspublish.reporter());
@@ -151,14 +158,13 @@ module.exports = function (gulp, options) {
     runSequence('aws:config', 'aws:publish', err => {
       if (err) {
         gutil.log(gutil.colors.red(`Your deploy failed!`));
-        gutil.log(err.message);
+        notify.onError()(err);
       } else {
         gutil.log(`Your site has been deployed to AWS`);
         gutil.log('----------------------------------');
         gutil.log(gutil.colors.green(deployHost));
       }
 
-      notify.onError()(err);
       cb(err);
     });
   });

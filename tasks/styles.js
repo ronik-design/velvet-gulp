@@ -67,11 +67,24 @@ const getImageUrl = function (site) {
   };
 };
 
-/* eslint-disable */
+const sassImportMappings = function (maps) {
+  const mapper = function (importPath, prevPath) {
+    let file = prevPath;
 
-const sassImporter = null;
+    for (const map of maps) {
+      const re = new RegExp(map.search);
+      file = importPath.replace(re, map.replace);
+    }
 
-/* eslint-enable */
+    if (file === prevPath) {
+      return null;
+    }
+
+    return {file};
+  };
+
+  return maps && maps.length ? mapper : null;
+};
 
 const sassFunction = function (site) {
   return {
@@ -198,7 +211,6 @@ module.exports = function (gulp, options) {
     const srcOpts = {cwd: srcDir, base: srcDir};
 
     const sassConfig = {
-      importer: sassImporter,
       functions: sassFunction
     };
 
@@ -209,6 +221,10 @@ module.exports = function (gulp, options) {
 
     if (config.styles) {
       if (config.styles.sass) {
+        if (config.styles.sass.importMappings) {
+          sassConfig.importer = sassImportMappings(config.styles.sass.importMappings);
+          delete config.styles.sass.importMappings;
+        }
         Object.assign(sassConfig, config.styles.sass);
       }
 

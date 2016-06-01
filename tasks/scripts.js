@@ -17,6 +17,8 @@ const plugins = require('../plugins');
 
 const TASK_NAME = 'scripts';
 
+const WEBPACK_CONFIG_FILENAME = 'webpack.config.js';
+
 const MINIFY_DEFAULTS = {
   'screw_ie8': true,
   'properties': true,
@@ -27,16 +29,65 @@ const MINIFY_DEFAULTS = {
   'keep_fargs': true
 };
 
+const DEVELOPMENT_DEFAULTS = {
+  cache: true,
+  debug: true,
+  devtool: 'source-map'
+};
+
+const DEVELOPMENT_PLUGIN_DEFAULTS = [
+  new webpack.NoErrorsPlugin(),
+  new webpack.DefinePlugin({'__DEV__': true})
+];
+
+const PRODUCTION_DEFAULTS = {
+  cache: false,
+  debug: false,
+  devtool: false
+};
+
+const PRODUCTION_PLUGIN_DEFAULTS = [
+  new webpack.DefinePlugin({
+    'process.env.NODE_ENV': '\'production\'',
+    '__DEV__': false
+  }),
+  new webpack.optimize.AggressiveMergingPlugin()
+];
+
+const getConfigFile = function (dir, type) {
+  try {
+    const filepath = path.join(dir, `webpack.${type}.config.js`);
+    fs.accessSync(filepath, fs.F_OK);
+    return filepath;
+  } catch (e) {
+    return false;
+  }
+};
+
 const getConfig = function (scriptsDir, options) {
-  let configPath;
+  let config;
 
   if (options.production) {
-    configPath = path.join(scriptsDir, 'webpack.production.config.js');
+    const configPath = getConfigFile(scriptsDir, 'production');
+    config = require(configPath || WEBPACK_CONFIG_FILENAME);
+    config.plugins = config.plugins || [];
+
+    if (!configPath) {
+      Object.assign(config, PRODUCTION_DEFAULTS);
+      config.plugins = config.plugins.concat(PRODUCTION_PLUGIN_DEFAULTS);
+    }
   } else {
-    configPath = path.join(scriptsDir, 'webpack.development.config.js');
+    const configPath = getConfigFile(scriptsDir, 'development');
+    config = require(configPath || WEBPACK_CONFIG_FILENAME);
+    config.plugins = config.plugins || [];
+
+    if (!configPath) {
+      Object.assign(config, DEVELOPMENT_DEFAULTS);
+      config.plugins = config.plugins.concat(DEVELOPMENT_PLUGIN_DEFAULTS);
+    }
   }
 
-  return require(configPath);
+  return config;
 };
 
 const getEslintConfigFile = function (dir) {
@@ -102,9 +153,8 @@ module.exports = function (gulp, options) {
       webpackConfigCopy.output = {filename: script.destination};
 
       if (script.minify) {
-        const minifySettings = get(config, 'scripts.minify.settings') || {};
-        const uglifyOpts = {compress: Object.assign(MINIFY_DEFAULTS, minifySettings)};
-        const uglify = new webpack.optimize.UglifyJsPlugin(uglifyOpts);
+        const compress = get(config, 'scripts.minify.settings') || MINIFY_DEFAULTS;
+        const uglify = new webpack.optimize.UglifyJsPlugin({compress});
         webpackConfigCopy.plugins.push(uglify);
       }
 

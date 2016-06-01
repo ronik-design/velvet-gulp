@@ -68,7 +68,7 @@ module.exports = function (gulp, options) {
       error: site.config.error
     };
 
-    if (config.spa) {
+    if (config['single_page']) {
       s3Config.routes = [{
         Condition: {
           HttpErrorCodeReturnedEquals: '404'

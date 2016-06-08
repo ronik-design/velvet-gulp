@@ -12,6 +12,7 @@ const init = function (gulp, options) {
   require('./tasks/files')(gulp, options);
   require('./tasks/images')(gulp, options);
   require('./tasks/release')(gulp, options);
+  require('./tasks/revisions')(gulp, options);
   require('./tasks/scripts')(gulp, options);
   require('./tasks/sprites')(gulp, options);
   require('./tasks/styles')(gulp, options);

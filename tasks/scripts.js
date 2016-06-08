@@ -13,6 +13,7 @@ const clonedeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const cached = require('gulp-cached');
 const size = require('gulp-size');
+const uglify = require('gulp-uglify');
 const plugins = require('../plugins');
 
 const TASK_NAME = 'scripts';
@@ -96,21 +97,12 @@ const getConfig = function (scriptsDir, options) {
   return config;
 };
 
-const getEslintConfigFile = function (dir) {
-  try {
-    const filepath = path.join(dir, '.eslintrc');
-    fs.accessSync(filepath, fs.F_OK);
-    return filepath;
-  } catch (e) {
-    return false;
-  }
-};
-
 module.exports = function (gulp, options) {
   const runSequence = require('run-sequence').use(gulp);
   const velvet = options.velvet;
   const site = velvet.getGlobal('site');
   const config = velvet.getGlobal('config');
+  const environment = velvet.getGlobal('environment');
 
   gulp.task('scripts:copy', () => {
     const watching = gutil.env.watching;
@@ -135,7 +127,7 @@ module.exports = function (gulp, options) {
   });
 
   gulp.task('scripts:bundle', () => {
-    const production = gutil.env.production;
+    const production = environment === 'production';
     const watching = gutil.env.watching;
     const errorHandler = notify.onError();
 
@@ -144,30 +136,21 @@ module.exports = function (gulp, options) {
 
     const webpackConfig = getConfig(scriptsDir, {production});
 
-    const configFile = getEslintConfigFile(scriptsDir);
-
-    if (configFile) {
-      webpackConfig.eslint = {configFile};
-    }
-
     const scripts = site.scripts.filter(script => script.bundle);
+    const compress = get(config, 'scripts.minify.settings') || MINIFY_DEFAULTS;
 
     const tasks = [];
 
     for (const script of scripts) {
       const webpackConfigCopy = clonedeep(webpackConfig);
-      webpackConfigCopy.output = {filename: script.destination};
-
-      if (script.minify) {
-        const compress = get(config, 'scripts.minify.settings') || MINIFY_DEFAULTS;
-        const uglify = new webpack.optimize.UglifyJsPlugin({compress});
-        webpackConfigCopy.plugins.push(uglify);
-      }
+      webpackConfigCopy.output = {path: buildDir, filename: script.destination};
 
       tasks.push(gulp.src(script.path, {cwd: scriptsDir, base: scriptsDir})
         .pipe(gulpIf(watching, plumber({errorHandler})))
-        .pipe(plugins.init({velvet, filepath: script.filepath}))
         .pipe(webpackStream(webpackConfigCopy, webpack))
+        .pipe(plugins.init({velvet, filepath: script.filepath}))
+        .pipe(gulpIf(script.minify, uglify({compress})))
+        .pipe(gulpIf(script.revision, plugins.hash()))
         .pipe(plugins.destination()));
     }
 

@@ -9,6 +9,7 @@ module.exports = function (gulp) {
       ['documents', 'files', 'sprites'],
       ['scripts', 'styles'],
       'images',
+      'revisions',
       cb);
   });
 };

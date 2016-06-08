@@ -10,6 +10,7 @@ const s3Website = require('s3-website');
 const notify = require('gulp-notify');
 const mergeStream = require('merge-stream');
 const parallelize = require('concurrent-transform');
+const getManifest = require('../utils/get-manifest');
 const cyan = gutil.colors.cyan;
 const logName = `'${cyan('aws')}'`;
 
@@ -21,19 +22,6 @@ const REVISIONED_HEADERS = {
 
 const STATIC_HEADERS = {
   'Cache-Control': 'max-age=300, s-maxage=900, no-transform, public'
-};
-
-const getManifest = function (dirname, filename) {
-  let manifest;
-
-  try {
-    const revManifest = require(path.join(dirname, filename || 'revision-manifest.json'));
-    manifest = Object.keys(revManifest).map(p => revManifest[p]);
-  } catch (e) {
-    manifest = [];
-  }
-
-  return manifest;
 };
 
 const getBucket = function (target, config) {

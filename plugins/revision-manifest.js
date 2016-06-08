@@ -51,7 +51,7 @@ const revisionManifest = function (filepath, options) {
       return cb(null, file);
     }
 
-    manifest[file.destination] = file.destination;
+    manifest[file.originalDestination || file.destination] = file.destination;
 
     cb();
   };

@@ -180,6 +180,7 @@ module.exports = function (gulp, options) {
   const velvet = options.velvet;
   const site = velvet.getGlobal('site');
   const config = clonedeep(velvet.getGlobal('config'));
+  const environment = velvet.getGlobal('environment');
 
   gulp.task('styles:lint', () => {
     const watching = gutil.env.watching;
@@ -203,7 +204,7 @@ module.exports = function (gulp, options) {
   });
 
   gulp.task('styles:build', () => {
-    const production = gutil.env.production;
+    const production = environment === 'production';
     const watching = gutil.env.watching;
 
     const buildDir = config.build;
@@ -249,8 +250,9 @@ module.exports = function (gulp, options) {
         .pipe(gulpIf(!production, sourcemaps.init()))
         .pipe(sass(sassConfig).on('error', sass.logError))
         .pipe(postcss(processors))
+        .pipe(gulpIf(style.revision, plugins.hash()))
         .pipe(plugins.destination())
-        .pipe(gulpIf(!production, sourcemaps.write('./')));
+        .pipe(gulpIf(!production, sourcemaps.write('.')));
 
       tasks.push(task);
     }

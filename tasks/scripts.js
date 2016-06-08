@@ -14,6 +14,8 @@ const get = require('lodash.get');
 const cached = require('gulp-cached');
 const size = require('gulp-size');
 const uglify = require('gulp-uglify');
+const sourcemaps = require('gulp-sourcemaps');
+const through = require('through2');
 const plugins = require('../plugins');
 
 const TASK_NAME = 'scripts';
@@ -143,15 +145,27 @@ module.exports = function (gulp, options) {
 
     for (const script of scripts) {
       const webpackConfigCopy = clonedeep(webpackConfig);
+
       webpackConfigCopy.output = {path: buildDir, filename: script.destination};
 
       tasks.push(gulp.src(script.path, {cwd: scriptsDir, base: scriptsDir})
         .pipe(gulpIf(watching, plumber({errorHandler})))
         .pipe(webpackStream(webpackConfigCopy, webpack))
+        .pipe(gulpIf(!production, sourcemaps.init({loadMaps: true})))
+        .pipe(through.obj(function (file, enc, cb) {
+          // Dont pipe through any source map files as it will be handled
+          // by gulp-sourcemaps
+          const isSourceMap = /\.map$/.test(file.path);
+          if (!isSourceMap) {
+            this.push(file);
+          }
+          cb();
+        }))
         .pipe(plugins.init({velvet, filepath: script.filepath}))
         .pipe(gulpIf(script.minify, uglify({compress})))
         .pipe(gulpIf(script.revision, plugins.hash()))
-        .pipe(plugins.destination()));
+        .pipe(plugins.destination())
+        .pipe(gulpIf(!production, sourcemaps.write('.'))));
     }
 
     if (!tasks.length) {

@@ -25,13 +25,13 @@ module.exports = function (gulp, options) {
 
     const docExt = [].concat(mdExt).concat(htmlExt).join('|');
 
-    watch(`${config.source}/**/*.+(${docExt})`, () => {
+    watch([`${config.source}/**/*.+(${docExt})`, '!**/_*/**'], () => {
       reset();
       runSequence('documents', 'styles', 'scripts', 'images');
     });
 
-    watch(`${config['data_dir']}/**/*`, file => {
-      site.deleteObject(file.path);
+    watch(`${config['data_dir']}/**/*`, () => {
+      reset();
       runSequence('documents', 'styles', 'scripts', 'images');
     });
 

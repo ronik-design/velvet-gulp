@@ -179,7 +179,7 @@ module.exports = function (gulp, options) {
   const runSequence = require('run-sequence').use(gulp);
   const velvet = options.velvet;
   const site = velvet.getGlobal('site');
-  const config = clonedeep(velvet.getGlobal('config'));
+  const config = velvet.getGlobal('config');
   const environment = velvet.getGlobal('environment');
 
   gulp.task('styles:lint', () => {
@@ -223,9 +223,8 @@ module.exports = function (gulp, options) {
     if (get(config, 'styles.sass')) {
       if (config.styles.sass.importMappings) {
         sassConfig.importer = sassImportMappings(config.styles.sass.importMappings);
-        delete config.styles.sass.importMappings;
       }
-      Object.assign(sassConfig, config.styles.sass);
+      Object.assign(sassConfig, get(config, 'styles.sass.options'));
     }
 
     if (get(config, 'styles.postcss')) {

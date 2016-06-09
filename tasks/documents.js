@@ -36,7 +36,7 @@ module.exports = function (gulp, options) {
     return gulp.src(docPaths, {base: config.source})
       .pipe(gulpIf(watching, plumber({errorHandler})))
       .pipe(plugins.init({velvet}))
-      .pipe(plugins.render({velvet}))
+      .pipe(plugins.render({velvet, noCache: true}))
       .pipe(size({title: TASK_NAME}))
       .pipe(gulp.dest(config.build));
   });

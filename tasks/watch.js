@@ -31,10 +31,16 @@ module.exports = function (gulp, options) {
 
     watch([
       `${config.source}/**/*.+(${docExt})`,
+      `${config.source}/_templates/**/*.+(${docExt})`,
       `!${PRIVATE}`,
       `!${MODULES}`,
       `!${PACKAGE}`
     ], () => {
+      reset();
+      runSequence('documents', 'styles', 'scripts', 'images');
+    });
+
+    watch(`${config.source}/_templates/**/*.+(html|nunjucks|njk)`, () => {
       reset();
       runSequence('documents', 'styles', 'scripts', 'images');
     });

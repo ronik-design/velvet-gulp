@@ -54,7 +54,6 @@ module.exports = function (gulp, options) {
 
     watch([
       `${config['scripts_dir']}/**/*.+(${jsExt})`,
-      `!${PRIVATE}`,
       `!${MODULES}`,
       `!${PACKAGE}`
     ], () => {
@@ -65,7 +64,6 @@ module.exports = function (gulp, options) {
 
     watch([
       `${config['styles_dir']}/**/*.+(${cssExt})`,
-      `!${PRIVATE}`,
       `!${MODULES}`,
       `!${PACKAGE}`
     ], () => {

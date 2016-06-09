@@ -3,6 +3,10 @@
 const gutil = require('gulp-util');
 const watch = require('gulp-watch');
 
+const PRIVATE = '**/_*/**';
+const MODULES = 'node_modules/**/*';
+const PACKAGE = 'package.json';
+
 module.exports = function (gulp, options) {
   const runSequence = require('run-sequence').use(gulp);
   const velvet = options.velvet;
@@ -25,7 +29,12 @@ module.exports = function (gulp, options) {
 
     const docExt = [].concat(mdExt).concat(htmlExt).join('|');
 
-    watch([`${config.source}/**/*.+(${docExt})`, '!**/_*/**'], () => {
+    watch([
+      `${config.source}/**/*.+(${docExt})`,
+      `!${PRIVATE}`,
+      `!${MODULES}`,
+      `!${PACKAGE}`
+    ], () => {
       reset();
       runSequence('documents', 'styles', 'scripts', 'images');
     });
@@ -37,13 +46,23 @@ module.exports = function (gulp, options) {
 
     const jsExt = scriptsExt.join('|');
 
-    watch(`${config['scripts_dir']}/**/*.+(${jsExt})`, () => {
+    watch([
+      `${config['scripts_dir']}/**/*.+(${jsExt})`,
+      `!${PRIVATE}`,
+      `!${MODULES}`,
+      `!${PACKAGE}`
+    ], () => {
       runSequence('scripts');
     });
 
     const cssExt = stylesExt.join('|');
 
-    watch(`${config['styles_dir']}/**/*.+(${cssExt})`, () => {
+    watch([
+      `${config['styles_dir']}/**/*.+(${cssExt})`,
+      `!${PRIVATE}`,
+      `!${MODULES}`,
+      `!${PACKAGE}`
+    ], () => {
       runSequence('styles');
     });
 

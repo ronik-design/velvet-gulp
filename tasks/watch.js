@@ -87,7 +87,12 @@ module.exports = function (gulp, options) {
       .concat(imagesExt)
       .join('|');
 
-    watch(`${config.source}/**/*.!(${exceptExt})`, () => {
+    watch([
+      `${config.source}/**/*.!(${exceptExt})`,
+      `!${PRIVATE}`,
+      `!${MODULES}`,
+      `!${PACKAGE}`
+    ], () => {
       runSequence('files');
     });
 

@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const gutil = require('gulp-util');
 const watch = require('gulp-watch');
 
@@ -76,7 +77,8 @@ module.exports = function (gulp, options) {
       runSequence('images');
     });
 
-    watch(`${config['sprites_dir']}/**/*.+(svg)`, () => {
+    const spritesDir = path.join(config.source, config['sprites_dir']);
+    watch(`${spritesDir}/**/*.+(svg)`, () => {
       runSequence('sprites');
     });
 

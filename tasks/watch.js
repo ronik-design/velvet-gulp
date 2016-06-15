@@ -30,6 +30,7 @@ module.exports = function (gulp, options) {
 
     const docExt = [].concat(mdExt).concat(htmlExt).join('|');
 
+    // Watch the root
     watch([
       `${config.source}/**/*.+(${docExt})`,
       `${config.source}/_templates/**/*.+(${docExt})`,
@@ -41,16 +42,34 @@ module.exports = function (gulp, options) {
       runSequence('documents', 'styles', 'scripts', 'images');
     });
 
+    // Watch all collections
+    const collectionDirs = [];
+
+    for (const name in site.collections) {
+      const collection = site.collections[name];
+      if (collection.relative_directory !== '.') {
+        collectionDirs.push(`${config.source}/${collection.relative_directory}/**/*.+(${docExt})`);
+      }
+    }
+
+    watch(collectionDirs, () => {
+      reset();
+      runSequence('files', 'documents', 'styles', 'scripts', 'images');
+    });
+
+    // Watch templates
     watch(`${config.source}/_templates/**/*.+(html|nunjucks|njk)`, () => {
       reset();
       runSequence('documents', 'styles', 'scripts', 'images');
     });
 
+    // Watch data
     watch(`${config['data_dir']}/**/*`, () => {
       reset();
       runSequence('documents', 'styles', 'scripts', 'images');
     });
 
+    // Watch scripts
     const jsExt = scriptsExt.join('|');
 
     watch([
@@ -61,6 +80,7 @@ module.exports = function (gulp, options) {
       runSequence('scripts');
     });
 
+    // Watch styles
     const cssExt = stylesExt.join('|');
 
     watch([
@@ -71,17 +91,20 @@ module.exports = function (gulp, options) {
       runSequence('styles');
     });
 
+    // Watch images
     const imgExt = imagesExt.join('|');
 
     watch(`${config['images_dir']}/**/*.+(${imgExt})`, () => {
       runSequence('images');
     });
 
+    // Watch sprites
     const spritesDir = path.join(config.source, config['sprites_dir']);
     watch(`${spritesDir}/**/*.+(svg)`, () => {
       runSequence('sprites');
     });
 
+    // Watch normal files in root
     const exceptExt = [].concat(mdExt)
       .concat(htmlExt)
       .concat(scriptsExt)

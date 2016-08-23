@@ -39,6 +39,7 @@ module.exports = function (gulp, options) {
       .pipe(gulpIf(watching, plumber({errorHandler})))
       .pipe(cached(TASK_NAME))
       .pipe(plugins.init({velvet}))
+      .pipe(plugins.render({velvet, noCache: true}))
       .pipe(plugins.destination())
       .pipe(size({title: TASK_NAME}))
       .pipe(gulp.dest(buildDir))

@@ -65,7 +65,7 @@ module.exports = function (gulp, options) {
       host,
       port,
       server,
-      reloadDebounce: 2000,
+      reloadDebounce: 3000,
       files: [{
         match: path.join(buildDir, '**/*.+(js|html|css)'),
         options: {

@@ -39,7 +39,7 @@ module.exports = function (gulp, options) {
       `!${PACKAGE}`
     ], () => {
       reset();
-      runSequence('documents', 'styles', 'scripts', 'images');
+      runSequence('files', 'documents', 'styles', 'scripts', 'images');
     });
 
     // Watch all collections
@@ -60,13 +60,13 @@ module.exports = function (gulp, options) {
     // Watch templates
     watch(`${config.source}/_templates/**/*.+(html|nunjucks|njk)`, () => {
       reset();
-      runSequence('documents', 'styles', 'scripts', 'images');
+      runSequence('files', 'documents', 'styles', 'scripts', 'images');
     });
 
     // Watch data
     watch(`${config['data_dir']}/**/*`, () => {
       reset();
-      runSequence('documents', 'styles', 'scripts', 'images');
+      runSequence('files', 'documents',  'styles', 'scripts', 'images');
     });
 
     // Watch scripts
@@ -107,8 +107,6 @@ module.exports = function (gulp, options) {
     // Watch normal files in root
     const exceptExt = [].concat(mdExt)
       .concat(htmlExt)
-      .concat(scriptsExt)
-      .concat(stylesExt)
       .concat(imagesExt)
       .join('|');
 
@@ -118,7 +116,8 @@ module.exports = function (gulp, options) {
       `!${MODULES}`,
       `!${PACKAGE}`
     ], () => {
-      runSequence('files');
+      reset();
+      runSequence('files', 'documents', 'styles', 'scripts', 'images');
     });
 
     cb();

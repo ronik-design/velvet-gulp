@@ -32,7 +32,6 @@ const MINIFY_DEFAULTS = {
 
 const DEVELOPMENT_DEFAULTS = {
   cache: true,
-  debug: true,
   devtool: 'source-map'
 };
 
@@ -43,7 +42,6 @@ const DEVELOPMENT_PLUGIN_DEFAULTS = [
 
 const PRODUCTION_DEFAULTS = {
   cache: false,
-  debug: false,
   devtool: false
 };
 

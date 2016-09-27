@@ -138,8 +138,8 @@ module.exports = function (gulp, options) {
 
     let synced = merged.pipe(publisher.sync());
 
-    if (!gutil.env['no-cache']) {
-      synced.pipe(publisher.cache());
+    if (!gutil.env.hasOwnProperty('awspublish-cache') || gutil.env['awspublish-cache'] === true) { // eslint-disable-line
+      synced = synced.pipe(publisher.cache());
     }
 
     return synced.pipe(awspublish.reporter());

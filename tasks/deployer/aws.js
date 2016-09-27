@@ -136,10 +136,13 @@ module.exports = function (gulp, options) {
         .pipe(parallelize(publisher.publish(STATIC_HEADERS, publisherOpts), MAX_CONCURRENCY))
     );
 
-    return merged
-      .pipe(publisher.sync())
-      .pipe(publisher.cache())
-      .pipe(awspublish.reporter());
+    let synced = merged.pipe(publisher.sync());
+
+    if (!gutil.env['no-cache']) {
+      synced.pipe(publisher.cache());
+    }
+
+    return synced.pipe(awspublish.reporter());
   });
 
   gulp.task('deployer-aws', cb => {

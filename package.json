@@ -1,6 +1,6 @@
 {
   "name": "velvet-gulp",
-  "version": "1.2.21",
+  "version": "1.2.22",
   "description": "Gulp helpers for Velvet.",
   "main": "index.js",
   "engines": {
